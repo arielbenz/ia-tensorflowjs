@@ -1,4 +1,4 @@
-import { MnistData } from "./data.js";
+import { MnistData } from "./MnistData.js";
 
 async function showExamples(data) {
   // Create a container in the visor
@@ -28,19 +28,6 @@ async function showExamples(data) {
 
     imageTensor.dispose();
   }
-}
-
-async function run() {
-  const data = new MnistData();
-  await data.load();
-  await showExamples(data);
-
-  const model = getModel();
-  tfvis.show.modelSummary({ name: "Model Architecture", tab: "Model" }, model);
-
-  await train(model, data);
-  await showAccuracy(model, data);
-  await showConfusion(model, data);
 }
 
 async function train(model, data) {
@@ -190,6 +177,19 @@ async function showConfusion(model, data) {
   });
 
   labels.dispose();
+}
+
+async function run() {
+  const data = new MnistData();
+  await data.load();
+  await showExamples(data);
+
+  const model = getModel();
+  tfvis.show.modelSummary({ name: "Model Architecture", tab: "Model" }, model);
+
+  await train(model, data);
+  await showAccuracy(model, data);
+  await showConfusion(model, data);
 }
 
 document.addEventListener("DOMContentLoaded", run);
