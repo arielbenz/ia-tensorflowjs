@@ -1,0 +1,9 @@
+body {
+  font-family: Arial, sans-serif;
+}
+#canvas {
+  border: 1px solid black;
+}
+#result {
+  margin-top: 20px;
+}

@@ -112,7 +112,7 @@ function getModel() {
     tf.layers.dense({
       units: NUM_OUTPUT_CLASSES,
       kernelInitializer: "varianceScaling",
-      activation: "softmax",
+      activation: "sigmoid",
     })
   );
 

@@ -5,18 +5,21 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>TensorFlow.js</title>
+    
+    <link rel="stylesheet" href="styles.css">
 
-    <!-- Import TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>
-    <!-- Import tfjs-vis -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@1.0.2/dist/tfjs-vis.umd.min.js"></script>
-
-    <!-- Import the Mnist library -->
-    <script src="./MnistData.js" type="module"></script>
-
-    <!-- Import the main script file -->
-    <script src="./script.js" type="module"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="./script-canva.js" type="module"></script>
   </head>
+  
+  <body>
+    <h1>Digit Recognition with TensorFlow.js</h1>
 
-  <body></body>
+    <p>Dibuja un dígito en el canvas:</p>
+    <canvas id="canvas" width="280" height="280"></canvas>
+    <button id="clearButton">Limpiar</button>
+    <button id="predictButton">Reconocer Dígito</button>
+
+    <div id="result"></div>
+  </body>
 </html>

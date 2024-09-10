@@ -1,5 +1,5 @@
 {
-  "name": "IA Tensorflow.js",
+  "name": "ia-tensorflowjs",
   "version": "1.0.0",
   "description": "",
   "main": "data.js",
@@ -10,5 +10,8 @@
   "license": "ISC",
   "devDependencies": {
     "serve": "^14.2.3"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.21.0"
   }
 }
