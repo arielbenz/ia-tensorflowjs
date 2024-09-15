@@ -1,9 +1,56 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 20px;
+}
+
 body {
   font-family: Arial, sans-serif;
 }
-#canvas {
-  border: 1px solid black;
+
+.red-ann-container {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 50px 25px;
+  text-align: center;
 }
-#result {
-  margin-top: 20px;
+
+.red-ann-container__metrics {
+  padding: 0 150px;
+  text-align: left;
+  div {
+    padding: 12px 0;
+  }
+}
+
+.red-ann-container__train-btn {
+  background-color: darkorange;
+  border: none;
+  cursor: pointer;
+  padding: 15px 30px;
+  font-size: 16px;
+  margin-top: 40px;
+
+  &:hover {
+    background-color: #3f3f3f;
+    color: #fff;
+  }
+
+  &:disabled {
+    color: #ccc;
+    cursor: not-allowed;
+  }
+
+  &:disabled:hover {
+    color: #ccc;
+    background-color: darkorange;
+  }
+}
+
+.red-ann-container__result {
+  margin: 40px 0;
+  color: green;
 }

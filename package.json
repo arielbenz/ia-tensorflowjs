@@ -10,8 +10,5 @@
   "license": "ISC",
   "devDependencies": {
     "serve": "^14.2.3"
-  },
-  "dependencies": {
-    "@tensorflow/tfjs": "^4.21.0"
   }
 }

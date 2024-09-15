@@ -1,25 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TensorFlow.js</title>
-    
-    <link rel="stylesheet" href="styles.css">
+    <title>Reconocimiento de Dígitos con ANN</title>
+
+    <link rel="stylesheet" href="styles.css" />
 
     <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="./script-canva.js" type="module"></script>
+
+    <!-- Import the main script file -->
+    <script src="script.js" type="module"></script>
   </head>
-  
+
   <body>
-    <h1>Digit Recognition with TensorFlow.js</h1>
+    <div class="red-ann-container">
+      <h1>Reconocimiento de Dígitos con ANN</h1>
 
-    <p>Dibuja un dígito en el canvas:</p>
-    <canvas id="canvas" width="280" height="280"></canvas>
-    <button id="clearButton">Limpiar</button>
-    <button id="predictButton">Reconocer Dígito</button>
+      <button id="train-btn" class="red-ann-container__train-btn">
+        Entrenar Modelo
+      </button>
+      
+      <div id="result" class="red-ann-container__result"></div>
 
-    <div id="result"></div>
+      <div id="metrics" class="red-ann-container__metrics"></div>
+
+    </div>
   </body>
 </html>

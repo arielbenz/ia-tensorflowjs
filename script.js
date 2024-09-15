@@ -1,126 +1,108 @@
-import { MnistData } from "./MnistData.js";
+const IMAGE_WIDTH = 28;
+const IMAGE_HEIGHT = 28;
+const NUM_CLASSES = 10;
+const BATCH_SIZE = 64;
+const EPOCHS = 10;
 
-async function showExamples(data) {
-  // Create a container in the visor
-  const surface = tfvis
-    .visor()
-    .surface({ name: "Input Data Examples", tab: "Input Data" });
+async function loadMnist() {
+  // Cargar los datos de MNIST directamente desde TensorFlow.js
+  const [
+    trainImagesResponse,
+    trainLabelsResponse,
+    testImagesResponse,
+    testLabelsResponse,
+  ] = await Promise.all([
+    fetch(
+      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png"
+    ),
+    fetch(
+      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8"
+    ),
+    fetch(
+      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png"
+    ),
+    fetch(
+      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8"
+    ),
+  ]);
 
-  // Get the examples
-  const examples = data.nextTestBatch(20);
-  const numExamples = examples.xs.shape[0];
+  const trainImagesBuffer = await trainImagesResponse.arrayBuffer();
+  const trainLabelsBuffer = await trainLabelsResponse.arrayBuffer();
+  const testImagesBuffer = await testImagesResponse.arrayBuffer();
+  const testLabelsBuffer = await testLabelsResponse.arrayBuffer();
 
-  // Create a canvas element to render each example
-  for (let i = 0; i < numExamples; i++) {
-    const imageTensor = tf.tidy(() => {
-      // Reshape the image to 28x28 px
-      return examples.xs
-        .slice([i, 0], [1, examples.xs.shape[1]])
-        .reshape([28, 28, 1]);
-    });
+  const trainImages = new Uint8Array(trainImagesBuffer);
+  const trainLabels = new Uint8Array(trainLabelsBuffer);
+  const testImages = new Uint8Array(testImagesBuffer);
+  const testLabels = new Uint8Array(testLabelsBuffer);
 
-    const canvas = document.createElement("canvas");
-    canvas.width = 28;
-    canvas.height = 28;
-    canvas.style = "margin: 4px;";
-    await tf.browser.toPixels(imageTensor, canvas);
-    surface.drawArea.appendChild(canvas);
-
-    imageTensor.dispose();
-  }
-}
-
-async function train(model, data) {
-  const metrics = ["loss", "val_loss", "acc", "val_acc"];
-  const container = {
-    name: "Model Training",
-    tab: "Model",
-    styles: { height: "1000px" },
+  return {
+    train: { images: trainImages, labels: trainLabels },
+    test: { images: testImages, labels: testLabels },
   };
-  const fitCallbacks = tfvis.show.fitCallbacks(container, metrics);
-
-  const BATCH_SIZE = 512;
-  const TRAIN_DATA_SIZE = 5500;
-  const TEST_DATA_SIZE = 1000;
-
-  const [trainXs, trainYs] = tf.tidy(() => {
-    const d = data.nextTrainBatch(TRAIN_DATA_SIZE);
-    return [d.xs.reshape([TRAIN_DATA_SIZE, 28, 28, 1]), d.labels];
-  });
-
-  const [testXs, testYs] = tf.tidy(() => {
-    const d = data.nextTestBatch(TEST_DATA_SIZE);
-    return [d.xs.reshape([TEST_DATA_SIZE, 28, 28, 1]), d.labels];
-  });
-
-  return model.fit(trainXs, trainYs, {
-    batchSize: BATCH_SIZE,
-    validationData: [testXs, testYs],
-    epochs: 10,
-    shuffle: true,
-    callbacks: fitCallbacks,
-  });
 }
 
-function getModel() {
+function preprocessData(images, labels, numImages) {
+  const xs = new Float32Array(numImages * IMAGE_WIDTH * IMAGE_HEIGHT);
+  const ys = new Uint8Array(numImages);
+
+  for (let i = 0; i < numImages; i++) {
+    const offset = i * IMAGE_WIDTH * IMAGE_HEIGHT;
+    for (let j = 0; j < IMAGE_WIDTH * IMAGE_HEIGHT; j++) {
+      xs[offset + j] = images[offset + j] / 255; // Asegura que las imágenes están correctamente normalizadas
+    }
+    ys[i] = labels[i];
+  }
+
+  return {
+    xs: tf.tensor2d(xs, [numImages, IMAGE_WIDTH * IMAGE_HEIGHT]),
+    ys: tf.oneHot(tf.tensor1d(ys, "int32"), NUM_CLASSES),
+  };
+}
+
+// Crear el modelo ANN
+function createModel() {
   const model = tf.sequential();
 
-  const IMAGE_WIDTH = 28;
-  const IMAGE_HEIGHT = 28;
-  const IMAGE_CHANNELS = 1;
-
-  // In the first layer of our convolutional neural network we have
-  // to specify the input shape. Then we specify some parameters for
-  // the convolution operation that takes place in this layer.
-  model.add(
-    tf.layers.conv2d({
-      inputShape: [IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_CHANNELS],
-      kernelSize: 5,
-      filters: 8,
-      strides: 1,
-      activation: "relu",
-      kernelInitializer: "varianceScaling",
-    })
-  );
-
-  // The MaxPooling layer acts as a sort of downsampling using max values
-  // in a region instead of averaging.
-  model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
-
-  // Repeat another conv2d + maxPooling stack.
-  // Note that we have more filters in the convolution.
-  model.add(
-    tf.layers.conv2d({
-      kernelSize: 5,
-      filters: 16,
-      strides: 1,
-      activation: "relu",
-      kernelInitializer: "varianceScaling",
-    })
-  );
-  model.add(tf.layers.maxPooling2d({ poolSize: [2, 2], strides: [2, 2] }));
-
-  // Now we flatten the output from the 2D filters into a 1D vector to prepare
-  // it for input into our last layer. This is common practice when feeding
-  // higher dimensional data to a final classification output layer.
-  model.add(tf.layers.flatten());
-
-  // Our last layer is a dense layer which has 10 output units, one for each
-  // output class (i.e. 0, 1, 2, 3, 4, 5, 6, 7, 8, 9).
-  const NUM_OUTPUT_CLASSES = 10;
+  // Capa de entrada
   model.add(
     tf.layers.dense({
-      units: NUM_OUTPUT_CLASSES,
-      kernelInitializer: "varianceScaling",
-      activation: "sigmoid",
+      inputShape: [IMAGE_WIDTH * IMAGE_HEIGHT],
+      units: 128,
+      activation: "relu",
+      kernelInitializer: "heNormal",
+      kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }), // Regularización L2
     })
   );
 
-  // Choose an optimizer, loss function and accuracy metric,
-  // then compile and return the model
-  const optimizer = tf.train.adam();
+  // Primera capa oculta con 16 neuronas
+  model.add(
+    tf.layers.dense({
+      units: 16,
+      activation: "relu",
+      kernelInitializer: "heNormal",
+    })
+  );
+
+  // Segunda capa oculta con 16 neuronas
+  model.add(
+    tf.layers.dense({
+      units: 16,
+      activation: "relu",
+      kernelInitializer: "heNormal",
+    })
+  );
+
+  // Capa de salida con 10 neuronas para las clases (0 al 9)
+  model.add(
+    tf.layers.dense({
+      units: NUM_CLASSES,
+      activation: "softmax",
+    })
+  );
+
   model.compile({
-    optimizer: optimizer,
+    optimizer: tf.train.adam(0.0001), // Tasa de aprendizaje más baja
     loss: "categoricalCrossentropy",
     metrics: ["accuracy"],
   });
@@ -128,68 +110,77 @@ function getModel() {
   return model;
 }
 
-const classNames = [
-  "Zero",
-  "One",
-  "Two",
-  "Three",
-  "Four",
-  "Five",
-  "Six",
-  "Seven",
-  "Eight",
-  "Nine",
-];
+async function trainModel() {
+  document.getElementById("result").innerText = "Entrenando modelo...";
+  document.getElementById("train-btn").disabled = true;
 
-function doPrediction(model, data, testDataSize = 500) {
-  const IMAGE_WIDTH = 28;
-  const IMAGE_HEIGHT = 28;
-  const testData = data.nextTestBatch(testDataSize);
-  const testxs = testData.xs.reshape([
-    testDataSize,
-    IMAGE_WIDTH,
-    IMAGE_HEIGHT,
-    1,
-  ]);
-  const labels = testData.labels.argMax(-1);
-  const preds = model.predict(testxs).argMax(-1);
+  const mnist = await loadMnist();
 
-  testxs.dispose();
-  return [preds, labels];
-}
+  const numTrainImages = 1000;
+  const numTestImages = 10000;
 
-async function showAccuracy(model, data) {
-  const [preds, labels] = doPrediction(model, data);
-  const classAccuracy = await tfvis.metrics.perClassAccuracy(labels, preds);
-  const container = { name: "Accuracy", tab: "Evaluation" };
-  tfvis.show.perClassAccuracy(container, classAccuracy, classNames);
+  const trainData = preprocessData(
+    mnist.train.images,
+    mnist.train.labels,
+    numTrainImages
+  );
+  const testData = preprocessData(
+    mnist.test.images,
+    mnist.test.labels,
+    numTestImages
+  );
 
-  labels.dispose();
-}
+  // Verifica los primeros datos de entrenamiento y etiquetas
+  console.log(
+    "First training image:",
+    trainData.xs.slice([0, 0], [1, IMAGE_WIDTH * IMAGE_HEIGHT]).dataSync()
+  );
+  console.log(
+    "First training label:",
+    trainData.ys.slice([0, 0], [1, NUM_CLASSES]).dataSync()
+  );
 
-async function showConfusion(model, data) {
-  const [preds, labels] = doPrediction(model, data);
-  const confusionMatrix = await tfvis.metrics.confusionMatrix(labels, preds);
-  const container = { name: "Confusion Matrix", tab: "Evaluation" };
-  tfvis.render.confusionMatrix(container, {
-    values: confusionMatrix,
-    tickLabels: classNames,
+  console.log(trainData.xs.dataSync());
+
+  // Verifica si hay NaN en los datos de entrenamiento
+  if (trainData.xs.dataSync().some(isNaN)) {
+    console.error("NaN found in training images!");
+    return;
+  }
+
+  if (trainData.ys.dataSync().some(isNaN)) {
+    console.error("NaN found in training labels!");
+    return;
+  }
+
+  const model = createModel();
+
+  // Entrenar el modelo
+  await model.fit(trainData.xs, trainData.ys, {
+    epochs: EPOCHS,
+    batchSize: BATCH_SIZE,
+    validationData: [testData.xs, testData.ys],
+    callbacks: {
+      onEpochEnd: (epoch, logs) => {
+        console.log(
+          `Epoch ${epoch + 1}: Loss = ${logs.loss}, Accuracy = ${logs.acc}`
+        );
+
+        const newNode = document.createElement('div');
+        newNode.innerHTML = `Epoch ${epoch + 1}: Loss = ${logs.loss}, Accuracy = ${logs.acc}`;
+        document.getElementById("metrics").appendChild(newNode);
+
+        if (isNaN(logs.loss)) {
+          console.error("NaN detected in loss. Stopping training.");
+          model.stopTraining = true;
+        }
+      },
+    },
   });
 
-  labels.dispose();
+  document.getElementById("result").innerText = "Modelo entrenado con éxito.";
+  document.getElementById("train-btn").disabled = false;
 }
 
-async function run() {
-  const data = new MnistData();
-  await data.load();
-  await showExamples(data);
-
-  const model = getModel();
-  tfvis.show.modelSummary({ name: "Model Architecture", tab: "Model" }, model);
-
-  await train(model, data);
-  await showAccuracy(model, data);
-  await showConfusion(model, data);
-}
-
-document.addEventListener("DOMContentLoaded", run);
+// Llamar la función de entrenamiento al hacer clic en el botón
+document.getElementById("train-btn").addEventListener("click", trainModel);
