@@ -11,16 +11,46 @@ body {
   font-family: Arial, sans-serif;
 }
 
-.red-ann-container {
-  max-width: 1024px;
-  margin: 0 auto;
-  padding: 50px 25px;
+header {
   text-align: center;
 }
 
-.red-ann-container__metrics {
-  padding: 0 150px;
+header,
+.red-ann-container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 50px 25px;
+}
+
+.red-ann-container {
+  display: flex;
+  gap: 50px;
+}
+
+.red-ann-container__config {
+  padding: 40px 0;
   text-align: left;
+  width: 35%;
+
+  .field {
+    padding: 20px 0;
+  }
+
+  input {
+    border: 1px solid #ccc;
+    min-width: 100px;
+    padding: 16px 20px;
+    font-size: 16px;
+    display: block;
+    margin-top: 20px;
+  }
+}
+
+.red-ann-container__results {
+  width: 65%;
+}
+
+.red-ann-container__metrics {
   div {
     padding: 12px 0;
   }
@@ -51,6 +81,6 @@ body {
 }
 
 .red-ann-container__result {
-  margin: 40px 0;
+  margin: 58px 0 20px 0;
   color: green;
 }

@@ -2,28 +2,29 @@ const IMAGE_WIDTH = 28;
 const IMAGE_HEIGHT = 28;
 const NUM_CLASSES = 10;
 const BATCH_SIZE = 64;
-const EPOCHS = 10;
+
+const trainImagesUrl =
+  "https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png";
+const trainLabelsUrl =
+  "https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8";
 
 async function loadMnist() {
-  // Cargar los datos de MNIST directamente desde TensorFlow.js
+  // Load MNIST data directly from TensorFlow.js
+
+  // MNIST image and label data are downloaded as Uint8Array arrays from the TensorFlow URL.
+  // Images are preprocessed by dividing them by 255 to normalize them between 0 and 1,
+  // and labels are converted to one-hot format.
+
   const [
     trainImagesResponse,
     trainLabelsResponse,
     testImagesResponse,
     testLabelsResponse,
   ] = await Promise.all([
-    fetch(
-      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png"
-    ),
-    fetch(
-      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8"
-    ),
-    fetch(
-      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png"
-    ),
-    fetch(
-      "https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8"
-    ),
+    fetch(trainImagesUrl),
+    fetch(trainLabelsUrl),
+    fetch(trainImagesUrl),
+    fetch(trainLabelsUrl),
   ]);
 
   const trainImagesBuffer = await trainImagesResponse.arrayBuffer();
@@ -42,6 +43,9 @@ async function loadMnist() {
   };
 }
 
+// Images are stored in a Float32Array and normalized.
+// They are then converted to 2D tensors (tf.tensor2d) so that the model can process them.
+// Labels are converted to one-hot format using tf.oneHot to be used as output by the model.
 function preprocessData(images, labels, numImages) {
   const xs = new Float32Array(numImages * IMAGE_WIDTH * IMAGE_HEIGHT);
   const ys = new Uint8Array(numImages);
@@ -49,7 +53,7 @@ function preprocessData(images, labels, numImages) {
   for (let i = 0; i < numImages; i++) {
     const offset = i * IMAGE_WIDTH * IMAGE_HEIGHT;
     for (let j = 0; j < IMAGE_WIDTH * IMAGE_HEIGHT; j++) {
-      xs[offset + j] = images[offset + j] / 255; // Asegura que las imágenes están correctamente normalizadas
+      xs[offset + j] = images[offset + j] / 255; // Normalize images
     }
     ys[i] = labels[i];
   }
@@ -60,40 +64,33 @@ function preprocessData(images, labels, numImages) {
   };
 }
 
-// Crear el modelo ANN
-function createModel() {
+// Create the ANN model
+function createModel(hiddenLayers, neuronsByLayer) {
   const model = tf.sequential();
 
-  // Capa de entrada
+  // Input layer
   model.add(
     tf.layers.dense({
       inputShape: [IMAGE_WIDTH * IMAGE_HEIGHT],
       units: 128,
       activation: "relu",
       kernelInitializer: "heNormal",
-      kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }), // Regularización L2
+      kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }), // Regularization L2
     })
   );
 
-  // Primera capa oculta con 16 neuronas
-  model.add(
-    tf.layers.dense({
-      units: 16,
-      activation: "relu",
-      kernelInitializer: "heNormal",
-    })
-  );
+  // Create hidden layers based on the number
+  for (let index = 0; index < hiddenLayers; index++) {
+    model.add(
+      tf.layers.dense({
+        units: neuronsByLayer,
+        activation: "relu",
+        kernelInitializer: "heNormal",
+      })
+    );
+  }
 
-  // Segunda capa oculta con 16 neuronas
-  model.add(
-    tf.layers.dense({
-      units: 16,
-      activation: "relu",
-      kernelInitializer: "heNormal",
-    })
-  );
-
-  // Capa de salida con 10 neuronas para las clases (0 al 9)
+  // Create output layer for all the classes (0 to 9)
   model.add(
     tf.layers.dense({
       units: NUM_CLASSES,
@@ -101,8 +98,9 @@ function createModel() {
     })
   );
 
+  // Compile the model
   model.compile({
-    optimizer: tf.train.adam(0.0001), // Tasa de aprendizaje más baja
+    optimizer: tf.train.adam(0.0001), // Lower learning rate
     loss: "categoricalCrossentropy",
     metrics: ["accuracy"],
   });
@@ -110,7 +108,14 @@ function createModel() {
   return model;
 }
 
+function cleanResults() {
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("metrics").innerHTML = "";
+}
+
 async function trainModel() {
+  cleanResults();
+
   document.getElementById("result").innerText = "Entrenando modelo...";
   document.getElementById("train-btn").disabled = true;
 
@@ -130,7 +135,7 @@ async function trainModel() {
     numTestImages
   );
 
-  // Verifica los primeros datos de entrenamiento y etiquetas
+  // Verify labels and training data
   console.log(
     "First training image:",
     trainData.xs.slice([0, 0], [1, IMAGE_WIDTH * IMAGE_HEIGHT]).dataSync()
@@ -140,9 +145,7 @@ async function trainModel() {
     trainData.ys.slice([0, 0], [1, NUM_CLASSES]).dataSync()
   );
 
-  console.log(trainData.xs.dataSync());
-
-  // Verifica si hay NaN en los datos de entrenamiento
+  // Verify if there is a NaN in training data
   if (trainData.xs.dataSync().some(isNaN)) {
     console.error("NaN found in training images!");
     return;
@@ -153,11 +156,21 @@ async function trainModel() {
     return;
   }
 
-  const model = createModel();
+  // Get values from the form
+  const hiddenLayers = parseInt(document.getElementById("hiddenLayers").value);
+  const neuronsByLayer = parseInt(
+    document.getElementById("neuronsByLayer").value
+  );
+  const quantityEpochs = parseInt(
+    document.getElementById("quantityEpochs").value
+  );
 
-  // Entrenar el modelo
+  // Create the model
+  const model = createModel(hiddenLayers, neuronsByLayer);
+
+  // Train the model
   await model.fit(trainData.xs, trainData.ys, {
-    epochs: EPOCHS,
+    epochs: quantityEpochs,
     batchSize: BATCH_SIZE,
     validationData: [testData.xs, testData.ys],
     callbacks: {
@@ -166,8 +179,10 @@ async function trainModel() {
           `Epoch ${epoch + 1}: Loss = ${logs.loss}, Accuracy = ${logs.acc}`
         );
 
-        const newNode = document.createElement('div');
-        newNode.innerHTML = `Epoch ${epoch + 1}: Loss = ${logs.loss}, Accuracy = ${logs.acc}`;
+        const newNode = document.createElement("div");
+        newNode.innerHTML = `Epoch ${epoch + 1}: Loss = ${
+          logs.loss
+        }, Accuracy = ${logs.acc}`;
         document.getElementById("metrics").appendChild(newNode);
 
         if (isNaN(logs.loss)) {
@@ -182,5 +197,5 @@ async function trainModel() {
   document.getElementById("train-btn").disabled = false;
 }
 
-// Llamar la función de entrenamiento al hacer clic en el botón
+// Click event for train model button
 document.getElementById("train-btn").addEventListener("click", trainModel);
