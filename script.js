@@ -63,7 +63,7 @@ function preprocessData(imgData, labelData) {
       const newValue = imgData[offset + j] / 255;
 
       if (isNaN(newValue)) {
-        images[offset + j] = 0;
+        images[offset + j] = 1;
       } else {
         images[offset + j] = newValue;
       }
@@ -126,6 +126,13 @@ function createModel() {
   return model;
 }
 
+// Stop train model
+function stopTrainModel() {
+  model.stopTraining = true;
+  document.getElementById("train-btn").disabled = false;
+  document.getElementById("stop-btn").style.display = "none";
+}
+
 // Train model
 async function trainModel() {
   cleanResults();
@@ -175,6 +182,7 @@ async function trainModel() {
 
   document.getElementById("result").innerText = "Modelo entrenado con éxito.";
   document.getElementById("train-btn").disabled = false;
+  document.getElementById("stop-btn").style.display = "none";
 }
 
 function cleanResults() {
@@ -183,7 +191,9 @@ function cleanResults() {
 
   document.getElementById("result").innerText = "Entrenando modelo...";
   document.getElementById("train-btn").disabled = true;
+  document.getElementById("stop-btn").style.display = "block";
 }
 
 // Click event for train model button
 document.getElementById("train-btn").addEventListener("click", trainModel);
+document.getElementById("stop-btn").addEventListener("click", stopTrainModel);
