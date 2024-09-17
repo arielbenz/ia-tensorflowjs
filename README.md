@@ -2,6 +2,10 @@
 
 TensorFlow.js model to recognize handwritten digits
 
+## Requirements
+- Nodejs
+- NPM
+
 ## How to install and run
 - Run `npm install`
 - Run `serve`
