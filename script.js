@@ -78,16 +78,23 @@ function preprocessData(imgData, labelData) {
 }
 
 // Create the ANN model
-function createModel(hiddenLayers, neuronsByLayer) {
+function createModel() {
   const model = tf.sequential();
+
+  // Get values from the form
+  const hiddenLayers = parseInt(document.getElementById("hiddenLayers").value);
+  const neuronsByLayer = parseInt(
+    document.getElementById("neuronsByLayer").value
+  );
+
+  const activationFunction = document.getElementById("fn-activation").value;
 
   // Input layer
   model.add(
     tf.layers.dense({
       inputShape: [IMAGE_SIZE],
       units: 128,
-      activation: "relu",
-      kernelInitializer: "heNormal", // Inicialization He
+      activation: activationFunction,
     })
   );
 
@@ -96,8 +103,7 @@ function createModel(hiddenLayers, neuronsByLayer) {
     model.add(
       tf.layers.dense({
         units: neuronsByLayer,
-        activation: "relu",
-        kernelInitializer: "heNormal",
+        activation: activationFunction,
       })
     );
   }
@@ -137,17 +143,12 @@ async function trainModel() {
   const testImages = dataTestSet.images;
   const testLabels = dataTestSet.labels;
 
-  // Get values from the form
-  const hiddenLayers = parseInt(document.getElementById("hiddenLayers").value);
-  const neuronsByLayer = parseInt(
-    document.getElementById("neuronsByLayer").value
-  );
+  // Create the model
+  model = createModel();
+
   const quantityEpochs = parseInt(
     document.getElementById("quantityEpochs").value
   );
-
-  // Create the model
-  model = createModel(hiddenLayers, neuronsByLayer);
 
   // Train the model
   await model.fit(trainImages, trainLabels, {
@@ -160,7 +161,7 @@ async function trainModel() {
         const newNode = document.createElement("div");
         newNode.innerHTML = `Epoch ${epoch + 1}: Loss = ${
           logs.loss
-        }, Accuracy = ${logs.acc}`;
+        } - Accuracy = ${logs.acc}`;
         document.getElementById("metrics").appendChild(newNode);
 
         if (isNaN(logs.loss)) {
