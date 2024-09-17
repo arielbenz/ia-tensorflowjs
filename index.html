@@ -1,22 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta charset="utf-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TensorFlow.js</title>
+    <title>Reconocimiento de Dígitos con ANN</title>
 
-    <!-- Import TensorFlow.js -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.0.0/dist/tf.min.js"></script>
-    <!-- Import tfjs-vis -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-vis@1.0.2/dist/tfjs-vis.umd.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
 
-    <!-- Import the Mnist library -->
-    <script src="./MnistData.js" type="module"></script>
+    <!-- Import tensorflowjs -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
 
     <!-- Import the main script file -->
-    <script src="./script.js" type="module"></script>
+    <script src="script.js" type="module"></script>
   </head>
 
-  <body></body>
+  <body>
+    <header>
+      <h1>Reconocimiento de Dígitos con ANN</h1>
+    </header>
+
+    <div class="red-ann-container">
+      <div class="red-ann-container__config">
+        <div class="field">
+          <label>Cantidad de capas ocultas:</label>
+          <div class="field-input">
+            <input
+              type="number"
+              id="hiddenLayers"
+              min="1"
+              max="100"
+              value="2"
+            />
+            <span>
+              <div>Min: 1</div>
+              <div>Max: 100</div>
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Cantidad neuronas en la capa oculta:</label>
+          <div class="field-input">
+            <input
+              type="number"
+              id="neuronsByLayer"
+              min="1"
+              max="100"
+              value="16"
+            />
+            <span>
+              <div>Min: 1</div>
+              <div>Max: 100</div>
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Cantidad de épocas:</label>
+          <div class="field-input">
+            <input
+              type="number"
+              id="quantityEpochs"
+              min="1"
+              max="30"
+              value="10"
+            />
+            <span>
+              <div>Min: 1</div>
+              <div>Max: 50</div>
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Cantidad imágenes para entrenar:</label>
+          <div class="field-input">
+            <input
+              type="number"
+              id="numTrainImages"
+              min="1000"
+              max="65000"
+              value="50000"
+            />
+            <span>
+              <div>Min: 1000</div>
+              <div>Max: 65000</div>
+            </span>
+          </div>
+        </div>
+
+        <button id="train-btn" class="red-ann-container__train-btn">
+          Entrenar Modelo
+        </button>
+      </div>
+
+      <div class="red-ann-container__results">
+        <div id="result" class="red-ann-container__result"></div>
+        <div id="metrics" class="red-ann-container__metrics"></div>
+      </div>
+    </div>
+  </body>
 </html>
