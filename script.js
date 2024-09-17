@@ -2,11 +2,17 @@ const IMAGE_WIDTH = 28;
 const IMAGE_HEIGHT = 28;
 const NUM_CLASSES = 10;
 const BATCH_SIZE = 64;
+const IMAGE_SIZE = IMAGE_WIDTH * IMAGE_HEIGHT;
 
-const trainImagesUrl =
+const NUM_DATASET_ELEMENTS = 65000;
+
+const IMAGE_URL =
   "https://storage.googleapis.com/learnjs-data/model-builder/mnist_images.png";
-const trainLabelsUrl =
+const LABELS_URL =
   "https://storage.googleapis.com/learnjs-data/model-builder/mnist_labels_uint8";
+
+let model;
+let numTrainImages;
 
 async function loadMnist() {
   // Load MNIST data directly from TensorFlow.js
@@ -21,10 +27,10 @@ async function loadMnist() {
     testImagesResponse,
     testLabelsResponse,
   ] = await Promise.all([
-    fetch(trainImagesUrl),
-    fetch(trainLabelsUrl),
-    fetch(trainImagesUrl),
-    fetch(trainLabelsUrl),
+    fetch(IMAGE_URL),
+    fetch(LABELS_URL),
+    fetch(IMAGE_URL),
+    fetch(LABELS_URL),
   ]);
 
   const trainImagesBuffer = await trainImagesResponse.arrayBuffer();
@@ -46,21 +52,28 @@ async function loadMnist() {
 // Images are stored in a Float32Array and normalized.
 // They are then converted to 2D tensors (tf.tensor2d) so that the model can process them.
 // Labels are converted to one-hot format using tf.oneHot to be used as output by the model.
-function preprocessData(images, labels, numImages) {
-  const xs = new Float32Array(numImages * IMAGE_WIDTH * IMAGE_HEIGHT);
-  const ys = new Uint8Array(numImages);
 
-  for (let i = 0; i < numImages; i++) {
-    const offset = i * IMAGE_WIDTH * IMAGE_HEIGHT;
-    for (let j = 0; j < IMAGE_WIDTH * IMAGE_HEIGHT; j++) {
-      xs[offset + j] = images[offset + j] / 255; // Normalize images
+function preprocessData(imgData, labelData) {
+  const images = new Float32Array(numTrainImages * IMAGE_SIZE);
+  const labels = new Uint8Array(numTrainImages);
+
+  for (let i = 0; i < numTrainImages; i++) {
+    const offset = i * IMAGE_SIZE;
+    for (let j = 0; j < IMAGE_SIZE; j++) {
+      const newValue = imgData[offset + j] / 255;
+
+      if (isNaN(newValue)) {
+        images[offset + j] = 0;
+      } else {
+        images[offset + j] = newValue;
+      }
     }
-    ys[i] = labels[i];
+    labels[i] = labelData[i];
   }
 
   return {
-    xs: tf.tensor2d(xs, [numImages, IMAGE_WIDTH * IMAGE_HEIGHT]),
-    ys: tf.oneHot(tf.tensor1d(ys, "int32"), NUM_CLASSES),
+    images: tf.tensor2d(images, [numTrainImages, IMAGE_SIZE]),
+    labels: tf.oneHot(tf.tensor1d(Array.from(labels), "int32"), NUM_CLASSES),
   };
 }
 
@@ -71,11 +84,10 @@ function createModel(hiddenLayers, neuronsByLayer) {
   // Input layer
   model.add(
     tf.layers.dense({
-      inputShape: [IMAGE_WIDTH * IMAGE_HEIGHT],
+      inputShape: [IMAGE_SIZE],
       units: 128,
       activation: "relu",
-      kernelInitializer: "heNormal",
-      kernelRegularizer: tf.regularizers.l2({ l2: 0.001 }), // Regularization L2
+      kernelInitializer: "heNormal", // Inicialization He
     })
   );
 
@@ -100,7 +112,7 @@ function createModel(hiddenLayers, neuronsByLayer) {
 
   // Compile the model
   model.compile({
-    optimizer: tf.train.adam(0.0001), // Lower learning rate
+    optimizer: tf.train.adam(0.0001),
     loss: "categoricalCrossentropy",
     metrics: ["accuracy"],
   });
@@ -108,53 +120,22 @@ function createModel(hiddenLayers, neuronsByLayer) {
   return model;
 }
 
-function cleanResults() {
-  document.getElementById("result").innerHTML = "";
-  document.getElementById("metrics").innerHTML = "";
-}
-
+// Train model
 async function trainModel() {
   cleanResults();
 
-  document.getElementById("result").innerText = "Entrenando modelo...";
-  document.getElementById("train-btn").disabled = true;
+  numTrainImages = parseInt(document.getElementById("numTrainImages").value);
 
-  const mnist = await loadMnist();
+  const { train, test } = await loadMnist();
 
-  const numTrainImages = 1000;
-  const numTestImages = 10000;
+  const dataSet = preprocessData(train.images, train.labels);
+  const dataTestSet = preprocessData(test.images, test.labels);
 
-  const trainData = preprocessData(
-    mnist.train.images,
-    mnist.train.labels,
-    numTrainImages
-  );
-  const testData = preprocessData(
-    mnist.test.images,
-    mnist.test.labels,
-    numTestImages
-  );
+  const trainImages = dataSet.images;
+  const trainLabels = dataSet.labels;
 
-  // Verify labels and training data
-  console.log(
-    "First training image:",
-    trainData.xs.slice([0, 0], [1, IMAGE_WIDTH * IMAGE_HEIGHT]).dataSync()
-  );
-  console.log(
-    "First training label:",
-    trainData.ys.slice([0, 0], [1, NUM_CLASSES]).dataSync()
-  );
-
-  // Verify if there is a NaN in training data
-  if (trainData.xs.dataSync().some(isNaN)) {
-    console.error("NaN found in training images!");
-    return;
-  }
-
-  if (trainData.ys.dataSync().some(isNaN)) {
-    console.error("NaN found in training labels!");
-    return;
-  }
+  const testImages = dataTestSet.images;
+  const testLabels = dataTestSet.labels;
 
   // Get values from the form
   const hiddenLayers = parseInt(document.getElementById("hiddenLayers").value);
@@ -166,19 +147,16 @@ async function trainModel() {
   );
 
   // Create the model
-  const model = createModel(hiddenLayers, neuronsByLayer);
+  model = createModel(hiddenLayers, neuronsByLayer);
 
   // Train the model
-  await model.fit(trainData.xs, trainData.ys, {
+  await model.fit(trainImages, trainLabels, {
     epochs: quantityEpochs,
     batchSize: BATCH_SIZE,
-    validationData: [testData.xs, testData.ys],
+    // validationData: [testImages, testLabels],
+    validationSplit: 0.2,
     callbacks: {
       onEpochEnd: (epoch, logs) => {
-        console.log(
-          `Epoch ${epoch + 1}: Loss = ${logs.loss}, Accuracy = ${logs.acc}`
-        );
-
         const newNode = document.createElement("div");
         newNode.innerHTML = `Epoch ${epoch + 1}: Loss = ${
           logs.loss
@@ -186,7 +164,8 @@ async function trainModel() {
         document.getElementById("metrics").appendChild(newNode);
 
         if (isNaN(logs.loss)) {
-          console.error("NaN detected in loss. Stopping training.");
+          document.getElementById("result").innerText =
+            "NaN detected in loss. Stopping training.";
           model.stopTraining = true;
         }
       },
@@ -195,6 +174,14 @@ async function trainModel() {
 
   document.getElementById("result").innerText = "Modelo entrenado con éxito.";
   document.getElementById("train-btn").disabled = false;
+}
+
+function cleanResults() {
+  document.getElementById("result").innerHTML = "";
+  document.getElementById("metrics").innerHTML = "";
+
+  document.getElementById("result").innerText = "Entrenando modelo...";
+  document.getElementById("train-btn").disabled = true;
 }
 
 // Click event for train model button

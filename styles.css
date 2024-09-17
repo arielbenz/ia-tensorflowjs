@@ -11,6 +11,10 @@ body {
   font-family: Arial, sans-serif;
 }
 
+canvas {
+  border: 1px solid black;
+}
+
 header {
   text-align: center;
 }
@@ -34,6 +38,13 @@ header,
 
   .field {
     padding: 20px 0;
+
+    .field-input {
+      display: flex;
+      align-items: center;
+      gap: 30px;
+      margin-top: 20px;
+    }
   }
 
   input {
@@ -42,7 +53,10 @@ header,
     padding: 16px 20px;
     font-size: 16px;
     display: block;
-    margin-top: 20px;
+  }
+
+  span {
+    font-size: 15px;
   }
 }
 

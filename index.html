@@ -23,29 +23,70 @@
       <div class="red-ann-container__config">
         <div class="field">
           <label>Cantidad de capas ocultas:</label>
-          <input type="number" id="hiddenLayers" min="1" max="100" value="2" />
+          <div class="field-input">
+            <input
+              type="number"
+              id="hiddenLayers"
+              min="1"
+              max="100"
+              value="2"
+            />
+            <span>
+              <div>Min: 1</div>
+              <div>Max: 100</div>
+            </span>
+          </div>
         </div>
 
         <div class="field">
           <label>Cantidad neuronas en la capa oculta:</label>
-          <input
-            type="number"
-            id="neuronsByLayer"
-            min="1"
-            max="100"
-            value="16"
-          />
+          <div class="field-input">
+            <input
+              type="number"
+              id="neuronsByLayer"
+              min="1"
+              max="100"
+              value="16"
+            />
+            <span>
+              <div>Min: 1</div>
+              <div>Max: 100</div>
+            </span>
+          </div>
         </div>
 
         <div class="field">
           <label>Cantidad de épocas:</label>
-          <input
-            type="number"
-            id="quantityEpochs"
-            min="1"
-            max="30"
-            value="10"
-          />
+          <div class="field-input">
+            <input
+              type="number"
+              id="quantityEpochs"
+              min="1"
+              max="30"
+              value="10"
+            />
+            <span>
+              <div>Min: 1</div>
+              <div>Max: 50</div>
+            </span>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Cantidad imágenes para entrenar:</label>
+          <div class="field-input">
+            <input
+              type="number"
+              id="numTrainImages"
+              min="1000"
+              max="65000"
+              value="50000"
+            />
+            <span>
+              <div>Min: 1000</div>
+              <div>Max: 65000</div>
+            </span>
+          </div>
         </div>
 
         <button id="train-btn" class="red-ann-container__train-btn">
@@ -55,7 +96,6 @@
 
       <div class="red-ann-container__results">
         <div id="result" class="red-ann-container__result"></div>
-
         <div id="metrics" class="red-ann-container__metrics"></div>
       </div>
     </div>
