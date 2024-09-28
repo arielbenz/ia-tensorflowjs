@@ -1,121 +1,117 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Reconocimiento de Dígitos con ANN</title>
-
-    <link rel="stylesheet" href="styles.css" />
-
-    <!-- Import tensorflowjs -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-
-    <!-- Import the main script file -->
-    <script src="script.js" type="module"></script>
   </head>
-
   <body>
     <header>
       <h1>Reconocimiento de Dígitos con ANN</h1>
     </header>
 
-    <div class="red-ann-container">
-      <div class="red-ann-container__config">
-        <div class="field">
-          <label>Cantidad de capas ocultas</label>
-          <div class="field-input">
-            <input
-              type="number"
-              id="hiddenLayers"
-              min="1"
-              max="100"
-              value="2"
-            />
-            <span>
-              <div>Min: 1</div>
-              <div>Max: 100</div>
-            </span>
+    <div id="app">
+      <div class="red-ann-container">
+        <div class="red-ann-container__config">
+          <div class="field">
+            <label>Cantidad de capas ocultas</label>
+            <div class="field-input">
+              <input
+                type="number"
+                id="hiddenLayers"
+                min="1"
+                max="100"
+                value="2"
+              />
+              <span>
+                <div>Min: 1</div>
+                <div>Max: 100</div>
+              </span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Cantidad neuronas en la capa oculta</label>
+            <div class="field-input">
+              <input
+                type="number"
+                id="neuronsByLayer"
+                min="1"
+                max="100"
+                value="16"
+              />
+              <span>
+                <div>Min: 1</div>
+                <div>Max: 100</div>
+              </span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>Cantidad de épocas</label>
+            <div class="field-input">
+              <input
+                type="number"
+                id="quantityEpochs"
+                min="1"
+                max="30"
+                value="10"
+              />
+              <span>
+                <div>Min: 1</div>
+                <div>Max: 50</div>
+              </span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label>% imágenes para entrenar</label>
+            <div class="field-input">
+              <input
+                type="number"
+                id="numTrainImages"
+                min="5"
+                max="100"
+                value="80"
+                step="5"
+              />
+              <span>
+                <div>Min: 5%</div>
+                <div>Max: 100%</div>
+              </span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="fn-activation">Función de activación</label>
+            <div class="field-input">
+              <select name="fn-activation" id="fn-activation">
+                <option value="relu" selected>Relu</option>
+                <option value="sigmoid">Sigmoid</option>
+                <option value="tanh">Tanh</option>
+                <option value="softmax">Softmax</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="red-ann-actions">
+            <button id="train-btn" class="red-ann-container__train-btn">
+              Entrenar Modelo
+            </button>
+            <button id="stop-btn" class="red-ann-container__train-btn">
+              Stop
+            </button>
           </div>
         </div>
 
-        <div class="field">
-          <label>Cantidad neuronas en la capa oculta</label>
-          <div class="field-input">
-            <input
-              type="number"
-              id="neuronsByLayer"
-              min="1"
-              max="100"
-              value="16"
-            />
-            <span>
-              <div>Min: 1</div>
-              <div>Max: 100</div>
-            </span>
-          </div>
+        <div class="red-ann-container__results">
+          <div id="result" class="red-ann-container__result"></div>
+          <div id="metrics" class="red-ann-container__metrics"></div>
         </div>
-
-        <div class="field">
-          <label>Cantidad de épocas</label>
-          <div class="field-input">
-            <input
-              type="number"
-              id="quantityEpochs"
-              min="1"
-              max="30"
-              value="10"
-            />
-            <span>
-              <div>Min: 1</div>
-              <div>Max: 50</div>
-            </span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label>Cantidad imágenes para entrenar</label>
-          <div class="field-input">
-            <input
-              type="number"
-              id="numTrainImages"
-              min="1000"
-              max="65000"
-              value="50000"
-            />
-            <span>
-              <div>Min: 1000</div>
-              <div>Max: 65000</div>
-            </span>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="fn-activation">Función de activación</label>
-          <div class="field-input">
-            <select name="fn-activation" id="fn-activation">
-              <option value="relu" selected>Relu</option>
-              <option value="sigmoid">Sigmoid</option>
-              <option value="tanh">Tanh</option>
-              <option value="softmax">Softmax</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="red-ann-actions">
-          <button id="train-btn" class="red-ann-container__train-btn">
-            Entrenar Modelo
-          </button>
-          <button id="stop-btn" class="red-ann-container__train-btn">
-            Stop
-          </button>
-        </div>
-        
-      </div>
-
-      <div class="red-ann-container__results">
-        <div id="result" class="red-ann-container__result"></div>
-        <div id="metrics" class="red-ann-container__metrics"></div>
       </div>
     </div>
+
+    <script type="module" src="/main.js"></script>
   </body>
 </html>

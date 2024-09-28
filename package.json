@@ -1,14 +1,23 @@
 {
   "name": "ia-tensorflowjs",
+  "private": true,
   "version": "1.0.0",
-  "description": "",
-  "main": "data.js",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint",
+    "preview": "vite preview"
   },
-  "author": "",
-  "license": "ISC",
   "devDependencies": {
-    "serve": "^14.2.3"
+    "@eslint/js": "^9.10.0",
+    "eslint": "^9.10.0",
+    "globals": "^15.9.0",
+    "prettier": "^3.3.3",
+    "vite": "^5.4.1"
+  },
+  "dependencies": {
+    "@tensorflow/tfjs": "^4.21.0",
+    "@tensorflow/tfjs-vis": "^1.5.1"
   }
 }
